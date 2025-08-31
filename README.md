@@ -1,63 +1,20 @@
-display_errors = On
-memory_limit = 256M
-upload_max_filesize = 20M
-post_max_size = 20M
-date.timezone = Asia/Bangkok
+# PHP-FPM Lumen API with MySQL
 
-; เปิด opcache เมื่อเป็น prod (สามารถควบคุมด้วย ENV/ARG ก็ได้)
-opcache.enable=1
-opcache.enable_cli=0
-opcache.jit_buffer_size=64M
-opcache.memory_consumption=128
-opcache.interned_strings_buffer=16
-opcache.max_accelerated_files=20000
-
-
-[www]
-user = app
-group = app
-listen = 9000
-listen.mode = 0660
-
-pm = dynamic
-pm.max_children = 10
-pm.start_servers = 2
-pm.min_spare_servers = 2
-pm.max_spare_servers = 5
-pm.max_requests = 500
-
-; เปิด path สำหรับ healthcheck
-ping.path = /fpm-ping
-pm.status_path = /fpm-status
-
-; เพิ่ม env ที่จำเป็น
-env[APP_ENV] = $APP_ENV
-
-; log ปกติ (ปรับตามต้องการ)
-; php_admin_value[error_log] = /var/www/storage/logs/php-fpm-error.log
-; php_admin_flag[log_errors] = on
-
-
-
-
-# PHP openswoole API with MariaDB
-
-A simple PHP openswoole API application and MariaDB, containerized with Docker.
+A simple PHP-FPM Lumen API application and MySQL, containerized with Docker.
 
 
 ## Technology Stack
 
-**PHP openswoole Container: FROM php:8.4-fpm-alpine**
+**PHP-FPM Lumen Container: FROM php:8.4-fpm-alpine**
 - OS Alpine Linux: 3.22.0
 - PHP: 8.4.8
 - pdo
 - pdo_mysql
 - opcache
-- openswoole: 25.2.0
 
-**MariaDB Container: FROM mariadb:lts-ubi9**
-- OS Red Hat Enterprise Linux: 9.6 (Plow)
-- MariaDB: 11.8.2
+**MySQL Container: FROM mysql:8.4.5**
+- OS Oracle Linux Server: 9.6
+- MySQL: 8.4.5
 
 **Adminer Container: FROM adminer:5-standalone**
 - OS Alpine Linux: 3.22.1
@@ -72,12 +29,12 @@ A simple PHP openswoole API application and MariaDB, containerized with Docker.
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/opsnoopop/api_php_openswoole_mariadb.git
+git clone https://github.com/opsnoopop/api_php_lumen_fpm_nginx_mysql.git
 ```
 
 ### 2. Navigate to Project Directory
 ```bash
-cd api_php_openswoole_mariadb
+cd api_php_lumen_fpm_nginx_mysql
 ```
 
 ### 3. Start the Application
@@ -87,7 +44,7 @@ docker compose up -d --build
 
 ### 4. Create table users
 ```bash
-docker exec -i container_mariadb mariadb -u'testuser' -p'testpass' testdb -e "
+docker exec -i container_mysql mysql -u'testuser' -p'testpass' testdb -e "
 CREATE TABLE IF NOT EXISTS testdb.users (
   user_id INT NOT NULL AUTO_INCREMENT ,
   username VARCHAR(50) NOT NULL ,
@@ -101,7 +58,7 @@ CREATE TABLE IF NOT EXISTS testdb.users (
 ## API Endpoints
 
 ### Health Check
-- **URL:** http://localhost:9501/
+- **URL:** http://localhost/
 - **Method:** GET
 - **Response:**
 ```json
@@ -111,7 +68,7 @@ CREATE TABLE IF NOT EXISTS testdb.users (
 ```
 
 ### Create user
-- **URL:** http://localhost:9501/users
+- **URL:** http://localhost/users
 - **Method:** POST
 - **Request**
 ```json
@@ -129,7 +86,7 @@ CREATE TABLE IF NOT EXISTS testdb.users (
 ```
 
 ### Get user
-- **URL:** http://localhost:9501/users/1
+- **URL:** http://localhost/users/1
 - **Method:** GET
 - **Response:**
 ```json
@@ -194,7 +151,7 @@ sysbench \
 --threads=2 \
 --time=10 \
 --db-driver="mysql" \
---mysql-host="container_mariadb" \
+--mysql-host="container_mysql" \
 --mysql-port=3306 \
 --mysql-user="testuser" \
 --mysql-password="testpass" \
@@ -216,7 +173,7 @@ sysbench \
 --threads=2 \
 --time=10 \
 --db-driver="mysql" \
---mysql-host="container_mariadb" \
+--mysql-host="container_mysql" \
 --mysql-port=3306 \
 --mysql-user="testuser" \
 --mysql-password="testpass" \
@@ -238,7 +195,7 @@ sysbench \
 --threads=2 \
 --time=10 \
 --db-driver="mysql" \
---mysql-host="container_mariadb" \
+--mysql-host="container_mysql" \
 --mysql-port=3306 \
 --mysql-user="testuser" \
 --mysql-password="testpass" \
@@ -260,7 +217,7 @@ docker run \
 --network global_php \
 -v ./k6/:/k6/ \
 grafana/k6:1.1.0 \
-run /k6/k6_health_check.js
+run /k6/k6_1_ramping_health_check.js
 ```
 
 ### grafana/k6 test Insert Create user
@@ -272,7 +229,7 @@ docker run \
 --network global_php \
 -v ./k6/:/k6/ \
 grafana/k6:1.1.0 \
-run /k6/k6_create_user.js
+run /k6/k6_2_ramping_create_user.js
 ```
 
 ### grafana/k6 test Select Get user by id
@@ -284,7 +241,7 @@ docker run \
 --network global_php \
 -v ./k6/:/k6/ \
 grafana/k6:1.1.0 \
-run /k6/k6_get_user_by_id.js
+run /k6/k6_3_ramping_get_user_by_id.js
 ```
 
 ### check entrypoint grafana/k6
@@ -302,13 +259,13 @@ docker run \
 
 ### Truncate table users
 ```bash
-docker exec -i container_mariadb mariadb -u'testuser' -p'testpass' testdb -e "
+docker exec -i container_mysql mysql -u'testuser' -p'testpass' testdb -e "
 Truncate testdb.users;"
 ```
 
 ### Delete table users
 ```bash
-docker exec -i container_mariadb mariadb -u'testuser' -p'testpass' testdb -e "
+docker exec -i container_mysql mysql -u'testuser' -p'testpass' testdb -e "
 DELETE FROM testdb.users;"
 ```
 
