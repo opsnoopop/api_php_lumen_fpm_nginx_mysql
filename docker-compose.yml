@@ -7,14 +7,14 @@ services:
     container_name: container_nginx
     restart: always
     depends_on:
-      - php
+      - api
     ports:
       - "80:80"
     networks:
-      network_php:
+      network_optest:
         ipv4_address: 172.16.0.10
 
-  php:
+  api:
     build:
       context: .
       dockerfile: php/Dockerfile
@@ -23,14 +23,15 @@ services:
     restart: always
     working_dir: /var/www
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:9000/fpm-ping"]
       interval: 10s
       timeout: 3s
       retries: 5
     networks:
-      network_php:
+      network_optest:
         ipv4_address: 172.16.0.11
 
   database:
@@ -53,7 +54,7 @@ services:
       timeout: 3s
       retries: 30
     networks:
-      network_php:
+      network_optest:
         ipv4_address: 172.16.0.12
 
   adminer:
@@ -65,12 +66,12 @@ services:
     depends_on:
       - database
     networks:
-      network_php:
+      network_optest:
         ipv4_address: 172.16.0.13
 
 networks:
-  network_php:
-    name: global_php
+  network_optest:
+    name: global_optest
     ipam:
       driver: default
       config:
