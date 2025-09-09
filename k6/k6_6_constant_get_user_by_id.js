@@ -34,7 +34,7 @@ const headers = {
 // Simulated user behavior
 export default function () {
   // GET users/:id
-  let res = http.get("http://container_nginx/users/1");
+  let res = http.get("http://container_nginx:80/users/1");
 
   // Validate response status
   check(res, { "status was 200": (r) => r.status == 200 });

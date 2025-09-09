@@ -21,7 +21,6 @@ export const options = {
         { duration: '5s', target: 10000 },
         { duration: '5s', target: 0 },    // ramp-down
       ],
-      gracefulStop: '5s',
     },
   },
   thresholds: {
@@ -47,7 +46,7 @@ export default function () {
     "username":"optest",
     "email":"opsnoopop@hotmail.com"
   };
-  let res = http.post("http://container_nginx/users", JSON.stringify(body), headers);
+  let res = http.post("http://container_nginx:80/users", JSON.stringify(body), headers);
 
   // Validate response status
   check(res, { "status was 201": (r) => r.status == 201 });
